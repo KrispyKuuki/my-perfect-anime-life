@@ -46,6 +46,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .screen{display:none}
 .screen.on{display:block}
 .muted{color:var(--ink-2)}
+.acc{color:var(--rose-d)}
 .small{font-size:14px;line-height:1.6}
 .tiny{font-size:13px;line-height:1.6;color:var(--ink-3)}
 
@@ -148,29 +149,269 @@ ul.list li{margin-bottom:9px}
 .toast.on{opacity:1}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
+/* ==================================================================
+   THE WEAVE
+   Per-type page theming for the result screen.
+
+   Same contract as the portraits. Each thread owns exactly one page
+   dimension and nothing else touches that dimension, so a reader who
+   learns the visual language can read the threads off the page the
+   same way they can read them off the picture. See
+   05-Art/miyoverse-art-bible.md section 2 and section 4d.
+
+     Aura    base tone, light direction, and which glyph the field uses
+     Sight   whether that field dissolves or resolves
+     Path    the geometry of the section rule
+     Heart   the posture of the section marker, open or closed
+     Tide    the line of the marker and the drift of the field
+     Creed   how far the light reaches, even or vignetted
+
+   Realm supplies the accent hue, exactly as Layer 3 does for the
+   portraits. Nothing here is authored per character. All 64 pages come
+   out of one rule set fed by the six-letter code.
+   ================================================================== */
+
+:root{--h:340;--s:0%}
+
+/* --- realm accent, one hue per realm, matching the portrait palettes --- */
+body[data-realm="SDF"]{--h:36; --s:64%}  /* Kogane Spire, warm amber gold   */
+body[data-realm="SDW"]{--h:176;--s:40%}  /* Hoshikaze Drift, pale turquoise */
+body[data-realm="SRF"]{--h:19; --s:70%}  /* Tetsumachi, hot iron orange     */
+body[data-realm="SRW"]{--h:8;  --s:64%}  /* Akatsuki Bazaar, dawn coral     */
+body[data-realm="LDF"]{--h:243;--s:46%}  /* Yomi Observatory, deep indigo   */
+body[data-realm="LDW"]{--h:128;--s:34%}  /* Mugen Hollow, pale green        */
+body[data-realm="LRF"]{--h:74; --s:26%}  /* Shizuka Terrace, moss and clay  */
+body[data-realm="LRW"]{--h:203;--s:20%}  /* Nagare Coast, cold sea grey     */
+
+/* --- Aura: base tone and light temperature --- */
+/* Solar. Warm paper, light from above. */
+body[data-aura="S"]{
+  --acc:      hsl(var(--h) var(--s) 44%);
+  --acc-ink:  hsl(var(--h) var(--s) 29%);
+  --acc-soft: hsl(var(--h) var(--s) 95%);
+  --acc-line: hsl(var(--h) var(--s) 60%);
+  --paper:    hsl(var(--h) 44% 98%);
+  --card:     hsl(var(--h) 60% 99.5%);
+  --line:     hsl(var(--h) 28% 90%);
+  --line-2:   hsl(var(--h) 24% 83%);
+  --ink:      hsl(var(--h) 20% 17%);
+  --ink-2:    hsl(var(--h) 13% 36%);
+  --ink-3:    hsl(var(--h) 11% 40%);
+  --glow:     hsl(var(--h) var(--s) 60% / .26);
+  --motif:    hsl(var(--h) var(--s) 46% / .17);
+  --shade:    hsl(var(--h) 34% 28% / .14);
+}
+/* Lunar. Dusk paper, light from behind. */
+body[data-aura="L"]{
+  --acc:      hsl(var(--h) var(--s) 62%);
+  --acc-ink:  hsl(var(--h) var(--s) 77%);
+  --acc-soft: hsl(var(--h) var(--s) 16%);
+  --acc-line: hsl(var(--h) var(--s) 42%);
+  --paper:    hsl(var(--h) 24% 8%);
+  --card:     hsl(var(--h) 20% 12.5%);
+  --line:     hsl(var(--h) 16% 22%);
+  --line-2:   hsl(var(--h) 16% 31%);
+  --ink:      hsl(var(--h) 18% 93%);
+  --ink-2:    hsl(var(--h) 14% 77%);
+  --ink-3:    hsl(var(--h) 12% 64%);
+  --glow:     hsl(var(--h) var(--s) 50% / .34);
+  --motif:    hsl(var(--h) var(--s) 76% / .24);
+  --shade:    hsl(var(--h) 40% 3% / .58);
+}
+body[data-aura]{color-scheme:light}
+body[data-aura="L"]{color-scheme:dark}
+
+/* --- the two background layers --- */
+#field,#motif{position:fixed;inset:0;pointer-events:none;z-index:-2;display:none}
+#motif{z-index:-1}
+body[data-aura] #field,body[data-aura] #motif{display:block}
+
+/* Aura sets where the light comes from. */
+body[data-aura="S"] #field{
+  background:
+    radial-gradient(126% 62% at 50% -14%, var(--glow), transparent 64%),
+    radial-gradient(90% 46% at 50% 104%, var(--glow), transparent 70%);
+}
+body[data-aura="L"] #field{
+  background:
+    radial-gradient(96% 52% at 50% 108%, var(--glow), transparent 62%),
+    radial-gradient(58% 46% at 106% 26%, var(--glow), transparent 64%),
+    radial-gradient(58% 46% at -6% 72%, var(--glow), transparent 68%);
+}
+/* Creed sets how far that light reaches. Pure leaves it even. */
+#field::after{content:"";position:absolute;inset:0}
+body[data-creed="V"] #field::after{
+  background:
+    linear-gradient(102deg, var(--shade) 0, transparent 44%),
+    radial-gradient(128% 96% at 50% 46%, transparent 42%, var(--shade) 100%);
+}
+
+/* --- the motif field --- */
+/* The clear zone is the reading column plus breathing room. Below 880px it
+   computes to zero on both sides, so the ornament removes itself on a phone
+   rather than being scaled down onto the text. */
+#motif{
+  --edge:max(0px,(100vw - 880px)/2);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--edge)*.16),#000 calc(var(--edge)*.74),transparent var(--edge),transparent calc(100% - var(--edge)),#000 calc(100% - var(--edge)*.74),#000 calc(100% - var(--edge)*.16),transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--edge)*.16),#000 calc(var(--edge)*.74),transparent var(--edge),transparent calc(100% - var(--edge)),#000 calc(100% - var(--edge)*.74),#000 calc(100% - var(--edge)*.16),transparent 100%);
+}
+#motif i{
+  position:absolute;inset:0;display:block;
+  background-image:linear-gradient(180deg,transparent 0,var(--motif) 20%,var(--motif) 80%,transparent 100%);
+  -webkit-mask-repeat:repeat;mask-repeat:repeat;
+  -webkit-mask-size:190px 270px;mask-size:190px 270px;
+}
+#motif i+i{display:none}
+
+/* Aura chooses the glyph. Lunar gets starlight, Solar gets sun flecks. */
+body[data-aura="L"] #motif i{
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='270' viewBox='0 0 190 270'%3E%3Cg fill='%23000'%3E%3Cg transform='translate(22,24) scale(.72)' opacity='.9'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(98,10) scale(.42)' opacity='.5'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(148,52) scale(.98)' opacity='1'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(58,86) scale(.46)' opacity='.55'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(126,116) scale(.58)' opacity='.7'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(16,138) scale(.86)' opacity='.85'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(92,166) scale(.38)' opacity='.45'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(158,194) scale(.64)' opacity='.72'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(42,212) scale(.5)' opacity='.6'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(110,242) scale(.8)' opacity='.85'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='270' viewBox='0 0 190 270'%3E%3Cg fill='%23000'%3E%3Cg transform='translate(22,24) scale(.72)' opacity='.9'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(98,10) scale(.42)' opacity='.5'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(148,52) scale(.98)' opacity='1'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(58,86) scale(.46)' opacity='.55'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(126,116) scale(.58)' opacity='.7'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(16,138) scale(.86)' opacity='.85'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(92,166) scale(.38)' opacity='.45'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(158,194) scale(.64)' opacity='.72'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(42,212) scale(.5)' opacity='.6'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3Cg transform='translate(110,242) scale(.8)' opacity='.85'%3E%3Cpath d='M12 1C12.8 8 16 11.2 23 12 16 12.8 12.8 16 12 23 11.2 16 8 12.8 1 12 8 11.2 11.2 8 12 1Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+body[data-aura="S"] #motif i{
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='270' viewBox='0 0 190 270'%3E%3Cg fill='%23000'%3E%3Ccircle cx='28' cy='30' r='3.4' opacity='.85'/%3E%3Ccircle cx='150' cy='58' r='2.2' opacity='.6'/%3E%3Ccircle cx='62' cy='92' r='4.6' opacity='.8'/%3E%3Ccircle cx='128' cy='124' r='2.6' opacity='.55'/%3E%3Ccircle cx='92' cy='172' r='3.8' opacity='.7'/%3E%3Ccircle cx='44' cy='214' r='2.4' opacity='.5'/%3E%3Ccircle cx='112' cy='248' r='4.2' opacity='.75'/%3E%3C/g%3E%3Cg fill='none' stroke='%23000' stroke-width='1.4'%3E%3Ccircle cx='100' cy='20' r='7' opacity='.42'/%3E%3Ccircle cx='20' cy='134' r='10.5' opacity='.34'/%3E%3Ccircle cx='160' cy='200' r='6' opacity='.42'/%3E%3Ccircle cx='168' cy='104' r='3.6' opacity='.3'/%3E%3C/g%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='270' viewBox='0 0 190 270'%3E%3Cg fill='%23000'%3E%3Ccircle cx='28' cy='30' r='3.4' opacity='.85'/%3E%3Ccircle cx='150' cy='58' r='2.2' opacity='.6'/%3E%3Ccircle cx='62' cy='92' r='4.6' opacity='.8'/%3E%3Ccircle cx='128' cy='124' r='2.6' opacity='.55'/%3E%3Ccircle cx='92' cy='172' r='3.8' opacity='.7'/%3E%3Ccircle cx='44' cy='214' r='2.4' opacity='.5'/%3E%3Ccircle cx='112' cy='248' r='4.2' opacity='.75'/%3E%3C/g%3E%3Cg fill='none' stroke='%23000' stroke-width='1.4'%3E%3Ccircle cx='100' cy='20' r='7' opacity='.42'/%3E%3Ccircle cx='20' cy='134' r='10.5' opacity='.34'/%3E%3Ccircle cx='160' cy='200' r='6' opacity='.42'/%3E%3Ccircle cx='168' cy='104' r='3.6' opacity='.3'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Sight decides whether that field resolves or dissolves. */
+body[data-sight="R"] #motif i{filter:none;opacity:1}
+body[data-sight="D"] #motif i{filter:blur(1.1px);opacity:.82}
+body[data-sight="D"] #motif i+i{
+  display:block;filter:blur(2.6px);opacity:.46;
+  -webkit-mask-size:310px 430px;mask-size:310px 430px;
+  -webkit-mask-position:88px 132px;mask-position:88px 132px;
+}
+
+/* Tide moves it, or holds it completely still. */
+@keyframes weave-drift{from{-webkit-mask-position:0 0;mask-position:0 0}to{-webkit-mask-position:0 -270px;mask-position:0 -270px}}
+@keyframes weave-drift-2{from{-webkit-mask-position:88px 132px;mask-position:88px 132px}to{-webkit-mask-position:88px 562px;mask-position:88px 562px}}
+body[data-tide="T"] #motif i{animation:weave-drift 96s linear infinite}
+body[data-tide="T"] #motif i+i{animation:weave-drift-2 150s linear infinite}
+
+/* --- the section rule and its marker --- */
+body[data-aura] .sect > h2{position:relative;padding-left:25px;border-bottom-color:var(--acc-line)}
+/* Path: Forged closes the rule, Wildstep breaks it. */
+body[data-path="W"] .sect > h2{
+  border-bottom:0;padding-bottom:10px;
+  background-image:linear-gradient(90deg,var(--acc-line) 0 57%,transparent 57% 64%,var(--acc-line) 64% 85%,transparent 85% 100%);
+  background-size:100% 2px;background-position:0 100%;background-repeat:no-repeat;
+}
+/* The marker is two marks, not one, so that Heart and Tide never write the
+   same CSS property. Heart owns the head on ::before. Tide owns the line
+   beneath it on ::after. See the one-dimension rule, art bible section 4d. */
+body[data-aura] .sect > h2::before,
+body[data-aura] .sect > h2::after{
+  content:"";position:absolute;left:0;width:14px;background:var(--acc);
+  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+}
+body[data-aura] .sect > h2::before{top:.2em;height:13px;-webkit-mask-size:14px 13px;mask-size:14px 13px}
+body[data-aura] .sect > h2::after{top:calc(.2em + 13px);height:9px;-webkit-mask-size:14px 9px;mask-size:14px 9px}
+/* Once there is a gutter to hang it in, the mark moves outside so the headings
+   stay flush with the body text. On a phone it sits inline instead. */
+@media (min-width:900px){
+  body[data-aura] .sect > h2{padding-left:0}
+  body[data-aura] .sect > h2::before,
+  body[data-aura] .sect > h2::after{left:-27px}
+}
+
+/* Heart: the posture of the head, open or closed. */
+body[data-heart="B"] .sect > h2::before{
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='13' viewBox='0 0 14 13'%3E%3Cpath d='M9.9 2.9a4.4 4.4 0 1 0 1.4 5' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='13' viewBox='0 0 14 13'%3E%3Cpath d='M9.9 2.9a4.4 4.4 0 1 0 1.4 5' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+body[data-heart="K"] .sect > h2::before{
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='13' viewBox='0 0 14 13'%3E%3Cpath d='M7 1.6 11.8 6.5 7 11.4 2.2 6.5Z' fill='%23000'/%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='13' viewBox='0 0 14 13'%3E%3Cpath d='M7 1.6 11.8 6.5 7 11.4 2.2 6.5Z' fill='%23000'/%3E%3C/svg%3E");
+}
+/* Tide: the line beneath it, in motion or hanging straight. */
+body[data-tide="C"] .sect > h2::after{
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M7 1.1V7.9' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M7 1.1V7.9' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+body[data-tide="T"] .sect > h2::after{
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M7 1.1c3.6 1.9-3.6 3.6 0 6.8' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M7 1.1c3.6 1.9-3.6 3.6 0 6.8' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* --- result-page colour follows the realm accent --- */
+body[data-aura] a,body[data-aura] .acc{color:var(--acc-ink)}
+body[data-aura] :focus-visible{outline-color:var(--acc-ink)}
+body[data-aura] .art{background:var(--acc-soft);border-color:var(--line);box-shadow:0 22px 60px -26px var(--glow)}
+body[data-aura] .art .ph{color:var(--acc-ink)}
+body[data-aura] .rhead .title{color:var(--acc-ink)}
+body[data-aura] .pill{background:var(--acc-soft);color:var(--acc-ink)}
+body[data-aura] .pill.b{background:transparent;color:var(--acc-ink);box-shadow:inset 0 0 0 1px var(--acc-line)}
+body[data-aura] .track{background:var(--line)}
+body[data-aura] .track > i{background:var(--acc-ink)}
+/* Shimmering reads as hatched rather than as a second hue, so the signal
+   survives on all eight realms and in greyscale print. */
+body[data-aura] .track.shim > i{background:repeating-linear-gradient(135deg,var(--acc-ink) 0 6px,transparent 6px 12px)}
+body[data-aura] .note{background:var(--acc-soft);border-left-color:var(--acc)}
+body[data-aura] .note h3{color:var(--acc-ink)}
+body[data-aura] .bond,body[data-aura] .branch,body[data-aura] .card{background:var(--card);border-color:var(--line)}
+body[data-aura] .bond .pic{background:var(--acc-soft);border-color:var(--line)}
+body[data-aura] .tier > b{background:var(--acc-soft);color:var(--acc-ink)}
+body[data-aura] .tier:last-child > b{background:var(--acc-ink);color:var(--paper)}
+body[data-aura] .tier .sk em{color:var(--acc-ink)}
+body[data-aura] .tier .sm{border-left-color:var(--line-2)}
+body[data-aura] .gloss{background:var(--acc-soft)}
+body[data-aura] .gloss h3{color:var(--acc-ink)}
+body[data-aura] .gloss dl{color:var(--ink-2)}
+body[data-aura] .pending{background:var(--acc-soft);border-color:var(--acc-line);color:var(--acc-ink)}
+body[data-aura] .btn{background:var(--acc-ink);color:var(--paper)}
+body[data-aura] .btn:hover{background:var(--acc)}
+body[data-aura] .btn-2{background:var(--card);color:var(--acc-ink);border-color:var(--line-2)}
+body[data-aura] .btn-2:hover{background:var(--acc-soft);border-color:var(--acc)}
+body[data-aura] .foot{border-top-color:var(--line)}
+body[data-aura] .toast{background:var(--ink);color:var(--paper)}
+
+/* Windows high-contrast and forced-colours users get the plain page. */
+@media (forced-colors:active){#field,#motif{display:none!important}}
+
 @media print{
   @page{margin:16mm 14mm}
-  body{background:#fff;font-size:11.5pt;line-height:1.6}
+
+  /* Every browser drops background colour on print unless a rule opts in.
+     That, plus the greyscale override that used to sit on .track > i, is why
+     the thread bars and the pills came out blank in the exported PDF. This
+     opts the whole document in, once. */
+  *,*::before,*::after{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+
+  /* The Weave is a screen treatment. Print gets clean paper in every case,
+     including the 32 Lunar characters, whose dark page would be unreadable
+     and ruinous on a home printer. The realm accent survives. */
+  #field,#motif{display:none!important}
+  body,body[data-aura]{
+    background:#fff!important;font-size:11.5pt;line-height:1.6;
+    --paper:#fff;--card:#fff;--line:#d9d5d7;--line-2:#c3bec1;
+    --ink:#1b181c;--ink-2:#3e3941;--ink-3:#5c5560;
+    --acc:      hsl(var(--h) var(--s) 46%);
+    --acc-ink:  hsl(var(--h) var(--s) 30%);
+    --acc-soft: hsl(var(--h) var(--s) 94%);
+    --acc-line: hsl(var(--h) var(--s) 60%);
+  }
   .wrap{max-width:none;padding:0}
   .bar-wrap,.actions,.nav,.toast,#s-intro,#s-test,.noprint{display:none!important}
   .screen{display:block!important}
-  .card,.bond,.branch,.note,.tp{border:1px solid #ccc!important;break-inside:avoid}
+  .card,.bond,.branch,.tp{border:1px solid var(--line)!important;break-inside:avoid}
+  .note{border:1px solid var(--acc-line)!important;border-left:4px solid var(--acc)!important;break-inside:avoid}
   .sect{break-inside:avoid;margin:16pt 0}
-  .art{max-width:88mm;break-inside:avoid}
-  .art img,.bond .pic img{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .art{max-width:88mm;break-inside:avoid;box-shadow:none!important}
   .bond .pic{flex-basis:22mm;width:22mm}
-  .tier .sm{border-left:2px solid #bbb}
-  .gloss{background:#f6f2ea!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .track{border:1px solid #999}
-  .track > i{background:#666!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .track.shim > i{background:#bbb!important}
+  .tier .sm{border-left:2px solid var(--line-2)}
+  .track{border:1px solid var(--acc-line)}
+  .track > i{background:var(--acc-ink)!important}
+  .track.shim > i{background:repeating-linear-gradient(135deg,var(--acc-ink) 0 6px,transparent 6px 12px)!important}
   h1,h2,h3{break-after:avoid}
-  .printfoot{display:block!important;margin-top:14pt;border-top:1px solid #ccc;padding-top:8pt;font-size:9pt;color:#666}
+  .printfoot{display:block!important;margin-top:14pt;border-top:1px solid var(--line);padding-top:8pt;font-size:9pt;color:var(--ink-3)}
 }
 .printfoot{display:none}
 </style>
 </head>
 <body>
+
+<div id="field" aria-hidden="true"></div>
+<div id="motif" aria-hidden="true"><i></i><i></i></div>
 
 <main class="wrap">
 
@@ -362,8 +603,31 @@ function bondCard(lab, code, text){
     : '';
   return '<div class="bond">'+pic+'<div class="txt"><p class="lab">'+esc(lab)+
     '</p><p class="who">'+esc(t.name)+'<small>'+esc(t.code)+'</small></p>'+
-    '<p class="small" style="margin:2px 0 0;color:var(--rose-d)">'+esc(t.title)+'</p>'+
+    '<p class="small acc" style="margin:2px 0 0">'+esc(t.title)+'</p>'+
     '<p>'+esc(text)+'</p></div></div>';
+}
+
+/* ---- The Weave -------------------------------------------------------
+   Turns the six-letter code into the page theme. One dimension per thread,
+   the same contract the portraits use. Nothing is authored per character.  */
+const WEAVE = ['aura','sight','path','heart','tide','creed'];
+
+function applyWeave(code){
+  const b = document.body;
+  b.dataset.realm = code.slice(0,3);
+  WEAVE.forEach((k,i)=>{ b.dataset[k] = code[i]; });
+  themeColor();
+}
+function clearWeave(){
+  const b = document.body;
+  delete b.dataset.realm;
+  WEAVE.forEach(k=>{ delete b.dataset[k]; });
+  themeColor();
+}
+function themeColor(){
+  let m = document.querySelector('meta[name="theme-color"]');
+  if(!m){ m = document.createElement('meta'); m.name = 'theme-color'; document.head.appendChild(m); }
+  m.content = getComputedStyle(document.body).backgroundColor;
 }
 
 const GLOSS = [
@@ -470,6 +734,7 @@ function showResult(s){
   h += '</div></div>';
 
   $('#result').innerHTML = h;
+  applyWeave(s.code);
   screen('s-result');
   try{ sessionStorage.removeItem('mpal'); }catch(e){}
 }
@@ -478,7 +743,7 @@ const para = v => (Array.isArray(v)?v:[v]).map(x=>'<p>'+esc(x)+'</p>').join('');
 const li   = a => a.map(x=>'<li>'+esc(x)+'</li>').join('');
 
 $('#pdf').onclick = ()=>{ window.print(); };
-$('#again').onclick = ()=>{ answers={}; page=0; save(); screen('s-intro'); };
+$('#again').onclick = ()=>{ answers={}; page=0; save(); clearWeave(); screen('s-intro'); };
 $('#share').onclick = async ()=>{
   const url = location.href.split('#')[0];
   const data = {title:'My Perfect Anime Life', text:'Six threads. Sixty-four souls. Find out who you are in the Miyoverse.', url};
